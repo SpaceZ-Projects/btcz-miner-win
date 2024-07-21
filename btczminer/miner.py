@@ -299,7 +299,7 @@ class MiningWindow(Box):
         elif not self.address_input.value:
             self.app.main_window.error_dialog(
                 "Missing Address",
-                "Please set a your mining address."
+                "Please set your own address."
             )
             self.address_input.focus()
             return
