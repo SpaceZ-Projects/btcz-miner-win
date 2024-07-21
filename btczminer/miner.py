@@ -4,6 +4,8 @@ import asyncio
 import subprocess
 import psutil
 import re
+import http
+from urllib.parse import urlparse
 
 from toga import (
     App,
@@ -17,7 +19,7 @@ from toga import (
 )
 from toga.widgets.base import Widget
 from toga.constants import Direction
-from toga.colors import WHITE, RED, YELLOW, BLACK
+from toga.colors import WHITE, RED, YELLOW, BLACK, GREENYELLOW
 
 from .styles.box import BoxStyle
 from .styles.label import LabelStyle
@@ -113,7 +115,8 @@ class MiningWindow(Box):
         )
         self.address_input = TextInput(
             placeholder="Paste T address",
-            style=InputStyle.address_input
+            style=InputStyle.address_input,
+            on_change=self.verify_address
         )
         self.address_box = Box(
             style=BoxStyle.select_address_box
@@ -176,6 +179,38 @@ class MiningWindow(Box):
         )
         await asyncio.sleep(1)
         self.app.main_window.show()
+
+
+    async def verify_address(self, input):
+        if not self.address_input.value:
+            self.address_input.style.color = WHITE
+            return None
+        
+        address = self.address_input.value
+        api_url = 'https://explorer.btcz.rocks/api'
+        url = f"{api_url}/addr/{address}"
+
+        try:
+            parsed_url = urlparse(url)
+            hostname = parsed_url.hostname
+            path = parsed_url.path
+
+            conn = http.client.HTTPSConnection(hostname)
+            conn.request("GET", path)
+            response = conn.getresponse()
+
+            if response.status == 200:
+                self.address_input.style.color = GREENYELLOW
+            else:
+                self.address_input.style.color = RED
+        except Exception as e:
+            print(f"Error occurred: {e}")
+            self.address_input.style.color = RED
+        
+        finally:
+            if conn:
+                conn.close()
+
     
 
 
